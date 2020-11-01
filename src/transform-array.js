@@ -1,29 +1,39 @@
+const CustomError = require("../extensions/custom-error");
+
 module.exports = function transform(arr) {
-    if (!Array.isArray(arr)) {
-        throw new Error();
-    }
+  if (!Array.isArray(arr)) {
+    throw new Error();
+  }
+  
+  let result = [];
 
-    const transformed = [];
+  arr.forEach(item=>{
+    result.push(item);
+  });
 
-    for (let i = 0; i < arr.length; i++) {
-        switch (arr[i]) {
-            case '--discard-next':
-                i++;
-                break;
-            case '--discard-prev':
-                transformed.pop();
-                break;    
-            case '--double-next':
-                i + 1 !== arr.length ? transformed.push(arr[i + 1]) : null;
-                break;
-            case '--double-prev':
-                i - 1 > 0 ? transformed.push(arr[i - 1]) : null;
-                break;
-            default:
-                transformed.push(arr[i]);
-                break;
-        }
-    }
+  result.forEach((element, index) => {
+    element == "--discard-prev" && index == 0
+      ? result.splice(index, 1, "--delete--")
+      : element == "--discard-prev" && index != 0
+      ? result.splice(index - 1, 2, "--delete--")
+      : result;
+    element == "--discard-next" && index == result.length - 1
+      ? result.splice(index, 1, "--delete--")
+      : element == "--discard-next" && index != result.length - 1
+      ? result.splice(index, 2, "--delete--")
+      : result;
+    element == "--double-prev" && index == 0
+      ? result.splice(index, 1, "--delete--")
+      : element == "--double-prev" && index != 0
+      ? result.splice(index, 1, result[index - 1])
+      : result;
+    element == "--double-next" && index == result.length - 1
+      ? result.splice(index, 1, "--delete--")
+      : element == "--double-next" && index != result.length - 1
+      ? result.splice(index, 1, result[index + 1])
+      : result;
+  });
 
-    return transformed;
+  const final = result.filter((element) => element != "--delete--");
+  return final;
 };
